@@ -1,7 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-const CATEGORIAS_KEY = "categorias";
-const PROFISSIONAIS_KEY = "profissionais";
+import { CATEGORIAS_KEY, PROFISSIONAIS_KEY } from "./mock";
 
 export type Categoria = {
   id: number;

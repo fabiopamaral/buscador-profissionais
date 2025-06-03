@@ -1,18 +1,13 @@
-import { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { View, Text, FlatList, TouchableOpacity, Linking } from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
 import DropDownPicker from "react-native-dropdown-picker";
 import {
   getCategorias,
   getProfissionais,
   Profissional,
 } from "../../data/storage";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 
 type DropDownItem = {
   label: string;
@@ -26,104 +21,126 @@ export default function BuscarScreen() {
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
   const router = useRouter();
 
-  useEffect(() => {
-    getCategorias().then((data) => {
-      setCategorias(data.map((c) => ({ label: c.nome, value: c.id })));
-    });
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getCategorias().then((data) => {
+        setCategorias(data.map((c) => ({ label: c.nome, value: c.id })));
+      });
+    }, [])
+  );
 
   const filtrar = async () => {
+    if (!categoriaId) {
+      setProfissionais([]);
+      return;
+    }
+
     const todos = await getProfissionais();
-    setProfissionais(
-      todos.filter((p: Profissional) => p.categoriaId === categoriaId)
-    );
+    const filtrados = todos.filter((p) => p.categoriaId === categoriaId);
+    setProfissionais(filtrados);
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: "#f9f9f9" }}>
-      <View style={{ padding: 20 }}>
-        <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 16 }}>
-          Buscar Profissionais
-        </Text>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: "#f9f9f9",
+        paddingHorizontal: 20,
+        zIndex: 1000,
+      }}
+    >
+      <FlatList
+        ListHeaderComponent={
+          <>
+            <Text
+              style={{ fontSize: 20, fontWeight: "bold", marginVertical: 16 }}
+            >
+              Buscar Profissionais
+            </Text>
 
-        <DropDownPicker
-          open={open}
-          value={categoriaId}
-          items={categorias}
-          setOpen={setOpen}
-          setValue={setCategoriaId}
-          setItems={setCategorias}
-          placeholder="Selecione a categoria"
-          style={{
-            borderColor: "#ccc",
-            borderRadius: 8,
-            marginBottom: 16,
-          }}
-          dropDownContainerStyle={{
-            borderColor: "#ccc",
-            borderRadius: 8,
-          }}
-        />
+            <DropDownPicker
+              open={open}
+              value={categoriaId}
+              items={categorias}
+              setOpen={setOpen}
+              setValue={setCategoriaId}
+              setItems={setCategorias}
+              placeholder="Selecione a categoria"
+              listMode="SCROLLVIEW"
+              style={{
+                borderColor: "#ccc",
+                borderRadius: 8,
+                marginBottom: open ? 140 : 16,
+                zIndex: 2000,
+              }}
+              dropDownContainerStyle={{
+                borderColor: "#ccc",
+                borderRadius: 8,
+                maxHeight: 150, //
+                zIndex: 2000,
+              }}
+              zIndex={2000}
+            />
 
-        <TouchableOpacity
-          onPress={filtrar}
-          style={{
-            backgroundColor: "#007AFF",
-            padding: 14,
-            borderRadius: 8,
-            alignItems: "center",
-            marginBottom: 20,
-          }}
-        >
-          <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
-            Buscar
-          </Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              onPress={filtrar}
+              style={{
+                backgroundColor: "#007AFF",
+                padding: 14,
+                borderRadius: 8,
+                alignItems: "center",
+                marginBottom: 20,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
+                Buscar
+              </Text>
+            </TouchableOpacity>
 
-        {profissionais.length === 0 ? (
-          <Text style={{ color: "#888", fontStyle: "italic" }}>
-            Nenhum profissional encontrado.
-          </Text>
-        ) : (
-          <FlatList
-            data={profissionais}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <View
-                style={{
-                  backgroundColor: "#fff",
-                  padding: 16,
-                  borderRadius: 8,
-                  marginBottom: 12,
-                  borderColor: "#ddd",
-                  borderWidth: 1,
-                }}
-              >
-                <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                  {item.nome}
-                </Text>
-                <Text style={{ color: "#555" }}>{item.cidade}</Text>
-                <Text style={{ color: "#555" }}>{item.fone}</Text>
-              </View>
+            {profissionais.length === 0 && (
+              <Text style={{ color: "#888", fontStyle: "italic" }}>
+                Nenhum profissional encontrado.
+              </Text>
             )}
-          />
-        )}
+          </>
+        }
+        data={profissionais}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <View
+            style={{
+              backgroundColor: "#fff",
+              padding: 16,
+              borderRadius: 8,
+              marginBottom: 12,
+              borderColor: "#ddd",
+              borderWidth: 1,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              zIndex: 1000,
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                {item.nome}
+              </Text>
+              <Text style={{ color: "#555" }}>{item.cidade}</Text>
+              <Text style={{ color: "#555" }}>{item.fone}</Text>
+            </View>
 
-        <TouchableOpacity
-          onPress={() => router.push("/mapa")}
-          style={{
-            marginTop: 16,
-            backgroundColor: "#34C759",
-            padding: 14,
-            borderRadius: 8,
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
-            Ver no Mapa
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+            <TouchableOpacity
+              onPress={() => {
+                const numero = item.fone.replace(/\D/g, "");
+                Linking.openURL(`https://wa.me/55${numero}`);
+              }}
+              style={{ marginLeft: 12 }}
+            >
+              <FontAwesome name="whatsapp" size={28} color="#25D366" />
+            </TouchableOpacity>
+          </View>
+        )}
+      />
+    </View>
   );
 }

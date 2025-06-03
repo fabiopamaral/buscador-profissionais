@@ -11,11 +11,13 @@ import {
   getCategorias,
   saveCategoria,
   deleteCategoria,
+  Categoria,
 } from "../../data/storage";
+import { popularComMocks } from "@/data/mock";
 
 export default function CategoriasScreen() {
   const [nome, setNome] = useState("");
-  const [categorias, setCategorias] = useState<any[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
 
   const salvar = async () => {
     if (!nome.trim()) return;
@@ -31,7 +33,15 @@ export default function CategoriasScreen() {
 
   const carregar = async () => {
     const data = await getCategorias();
-    const filtrado = data.filter((item: any) => item && item.id && item.nome);
+
+    if (!data || data.length === 0) {
+      await popularComMocks();
+    }
+
+    const dadosPopulados = await getCategorias();
+    const filtrado = dadosPopulados.filter(
+      (item: Categoria) => item && item.id && item.nome
+    );
     setCategorias(filtrado);
   };
 
